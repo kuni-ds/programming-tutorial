@@ -73,22 +73,12 @@ function isClear(board: number[][]): boolean {
   })
 }
 
-async function main(): Promise<void> {
-  const readline = createInterface({ input: stdin, output: stdout });
-  const input = await readline.question("盤面のサイズは？(min: 1, max: 9): ");
-  const size = Number(input);
-  if(!(0 < size && size <= 9)) {
-    console.log("無効な入力値です。");
-    console.log("最初からやり直してください。");
-    readline.close();
-    return;
-  }
-  let board = generateClearableBoard(size);
-  //displayBoard(board, size);
+function findSolution(board: number[][], size: number): void {
   //bit全探索
   let solutionBit = -1;
   for(let bit = 0; bit < (1<<size*size); bit++) {
     // console.log(bit);
+    // if(bit % 1000000 === 0) console.log(bit);
     let copyBoard = structuredClone(board);
     for(let i = 0; i < size*size; i++) {
       if(bit & (1<<i)) {
@@ -99,7 +89,7 @@ async function main(): Promise<void> {
     }
     if(isClear(copyBoard)) {
       solutionBit = bit;
-      break;
+      //break;
     }
   }
   //出力
@@ -115,7 +105,23 @@ async function main(): Promise<void> {
       }
     }
   }
-  
+}
+
+async function main(): Promise<void> {
+  const readline = createInterface({ input: stdin, output: stdout });
+  const input = await readline.question("盤面のサイズは？(min: 1, max: 9): ");
+  const size = Number(input);
+  if(!(0 < size && size <= 9)) {
+    console.log("無効な入力値です。");
+    console.log("最初からやり直してください。");
+    readline.close();
+    return;
+  }
+  let board = generateClearableBoard(size);
+  //displayBoard(board, size);
+
+  // size >= 5だと時間がかかりすぎる
+  if(size <= 4) findSolution(board, size);
 
   const startTime = performance.now();
   while(true) {
