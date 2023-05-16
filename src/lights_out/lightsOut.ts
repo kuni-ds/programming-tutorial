@@ -89,7 +89,7 @@ function findSolution(board: number[][], size: number): void {
     }
     if(isClear(copyBoard)) {
       solutionBit = bit;
-      //break;
+      break;
     }
   }
   //出力
