@@ -75,24 +75,75 @@ function isClear(board: number[][]): boolean {
 
 function findSolution(board: number[][], size: number): void {
   //bit全探索
+  //計算量 2^(size*size) * size^2
   let solutionBit = -1;
+  let minPushNum = size * size * 2;
   for(let bit = 0; bit < (1<<size*size); bit++) {
     // console.log(bit);
     // if(bit % 1000000 === 0) console.log(bit);
+    let pushNum = 0;
     let copyBoard = structuredClone(board);
     for(let i = 0; i < size*size; i++) {
       if(bit & (1<<i)) {
         const indexH = Math.floor(i / size);
         const indexW = i % size;
         pushBotton(copyBoard, indexH, indexW, size);
+        pushNum++;
       }
     }
     if(isClear(copyBoard)) {
-      solutionBit = bit;
-      break;
+      if(minPushNum > pushNum) {
+        solutionBit = bit;
+        minPushNum = pushNum;
+      }
     }
   }
   //出力
+  if(solutionBit === -1) {
+    console.log("Cleared Board");
+  } else {
+    for(let i = 0; i < size*size; i++) {
+      if(solutionBit & (1<<i)) {
+        const indexHTemp = Math.floor(i / size);
+        const indexH = String.fromCharCode('A'.charCodeAt(0) + indexHTemp);
+        const indexW = (i % size) + 1;
+        console.log(`${indexH}${indexW}`);
+      }
+    }
+  }
+}
+
+function findSolutionFast(board: number[][], size: number): void {
+  //計算量 2^size * size^2
+  let minPushNum = size * size * 2;
+  let solutionBit = -1;
+  for(let bit = 0; bit < (1<<size); bit++) {
+    let pushNum = 0;
+    let tempBit = 0;
+    let copyBoard = structuredClone(board);
+    for(let i = 0; i < size; i++) {
+      if(bit & (1<<i)) {
+        pushBotton(copyBoard, 0, i, size);
+        pushNum++;
+        tempBit |= (1<<i);
+      }
+    }
+    for(let i = 1; i < size; i++) {
+      for(let j = 0; j < size; j++) {
+        if(copyBoard[i-1][j] === 0) {
+          pushBotton(copyBoard, i, j, size);
+          pushNum++;
+          tempBit |= (1<<(size * i + j));
+        }
+      }
+    }
+    if(isClear(copyBoard)) {
+      if(minPushNum > pushNum) {
+        minPushNum = pushNum;
+        solutionBit = tempBit;
+      }
+    }
+  }
   if(solutionBit === -1) {
     console.log("Cleared Board");
   } else {
@@ -121,7 +172,7 @@ async function main(): Promise<void> {
   //displayBoard(board, size);
 
   // size >= 5だと時間がかかりすぎる
-  if(size <= 4) findSolution(board, size);
+  findSolutionFast(board, size);
 
   const startTime = performance.now();
   while(true) {
