@@ -56,7 +56,7 @@ function generateClearableBoard(size: number): number[][] {
   let board = initBoard(size);
   for(let i = 0; i < size; i++) {
     for(let j = 0; j < size; j++) {
-      if(Math.random() < 0.2) {
+      if(Math.random() < 0.03) {
         pushBotton(board, i, j, size);
         // console.log(i, j);
       }
@@ -116,45 +116,37 @@ function findSolution(board: number[][], size: number): void {
 function findSolutionFast(board: number[][], size: number): void {
   //計算量 2^size * size^2
   let minPushNum = size * size * 2;
-  let solutionBit = -1;
+  let solution = [] as string[];
   for(let bit = 0; bit < (1<<size); bit++) {
-    let pushNum = 0;
-    let tempBit = 0;
+    let tempSolution = [];
     let copyBoard = structuredClone(board);
     for(let i = 0; i < size; i++) {
       if(bit & (1<<i)) {
         pushBotton(copyBoard, 0, i, size);
-        pushNum++;
-        tempBit |= (1<<i);
+        tempSolution.push(`A${i+1}`);
       }
     }
     for(let i = 1; i < size; i++) {
       for(let j = 0; j < size; j++) {
         if(copyBoard[i-1][j] === 0) {
           pushBotton(copyBoard, i, j, size);
-          pushNum++;
-          tempBit |= (1<<(size * i + j));
+          const indexH = String.fromCharCode('A'.charCodeAt(0) + i);
+          const indexW = j + 1;
+          tempSolution.push(`${indexH}${indexW}`);
         }
       }
     }
     if(isClear(copyBoard)) {
-      if(minPushNum > pushNum) {
-        minPushNum = pushNum;
-        solutionBit = tempBit;
+      if(minPushNum > tempSolution.length) {
+        minPushNum = tempSolution.length;
+        solution = structuredClone(tempSolution);
       }
     }
   }
-  if(solutionBit === -1) {
+  if(solution.length === 0) {
     console.log("Cleared Board");
   } else {
-    for(let i = 0; i < size*size; i++) {
-      if(solutionBit & (1<<i)) {
-        const indexHTemp = Math.floor(i / size);
-        const indexH = String.fromCharCode('A'.charCodeAt(0) + indexHTemp);
-        const indexW = (i % size) + 1;
-        console.log(`${indexH}${indexW}`);
-      }
-    }
+    console.log(solution.join(" "));
   }
 }
 
