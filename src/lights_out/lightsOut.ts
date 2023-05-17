@@ -56,7 +56,7 @@ function generateClearableBoard(size: number): number[][] {
   let board = initBoard(size);
   for(let i = 0; i < size; i++) {
     for(let j = 0; j < size; j++) {
-      if(Math.random() < 0.2) {
+      if(Math.random() < 0.03) {
         pushBotton(board, i, j, size);
         // console.log(i, j);
       }
@@ -75,21 +75,27 @@ function isClear(board: number[][]): boolean {
 
 function findSolution(board: number[][], size: number): void {
   //bit全探索
+  //計算量 2^(size*size) * size^2
   let solutionBit = -1;
+  let minPushNum = size * size * 2;
   for(let bit = 0; bit < (1<<size*size); bit++) {
     // console.log(bit);
     // if(bit % 1000000 === 0) console.log(bit);
+    let pushNum = 0;
     let copyBoard = structuredClone(board);
     for(let i = 0; i < size*size; i++) {
       if(bit & (1<<i)) {
         const indexH = Math.floor(i / size);
         const indexW = i % size;
         pushBotton(copyBoard, indexH, indexW, size);
+        pushNum++;
       }
     }
     if(isClear(copyBoard)) {
-      solutionBit = bit;
-      break;
+      if(minPushNum > pushNum) {
+        solutionBit = bit;
+        minPushNum = pushNum;
+      }
     }
   }
   //出力
@@ -107,6 +113,43 @@ function findSolution(board: number[][], size: number): void {
   }
 }
 
+function findSolutionFast(board: number[][], size: number): void {
+  //計算量 2^size * size^2
+  let minPushNum = size * size * 2;
+  let solution = [] as string[];
+  for(let bit = 0; bit < (1<<size); bit++) {
+    let tempSolution = [];
+    let copyBoard = structuredClone(board);
+    for(let i = 0; i < size; i++) {
+      if(bit & (1<<i)) {
+        pushBotton(copyBoard, 0, i, size);
+        tempSolution.push(`A${i+1}`);
+      }
+    }
+    for(let i = 1; i < size; i++) {
+      for(let j = 0; j < size; j++) {
+        if(copyBoard[i-1][j] === 0) {
+          pushBotton(copyBoard, i, j, size);
+          const indexH = String.fromCharCode('A'.charCodeAt(0) + i);
+          const indexW = j + 1;
+          tempSolution.push(`${indexH}${indexW}`);
+        }
+      }
+    }
+    if(isClear(copyBoard)) {
+      if(minPushNum > tempSolution.length) {
+        minPushNum = tempSolution.length;
+        solution = structuredClone(tempSolution);
+      }
+    }
+  }
+  if(solution.length === 0) {
+    console.log("Cleared Board");
+  } else {
+    console.log(solution.join(" "));
+  }
+}
+
 async function main(): Promise<void> {
   const readline = createInterface({ input: stdin, output: stdout });
   const input = await readline.question("盤面のサイズは？(min: 1, max: 9): ");
@@ -121,7 +164,7 @@ async function main(): Promise<void> {
   //displayBoard(board, size);
 
   // size >= 5だと時間がかかりすぎる
-  if(size <= 4) findSolution(board, size);
+  findSolutionFast(board, size);
 
   const startTime = performance.now();
   while(true) {
